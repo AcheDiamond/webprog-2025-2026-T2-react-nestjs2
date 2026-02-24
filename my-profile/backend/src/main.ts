@@ -19,7 +19,4 @@ async function bootstrap() {
   console.log(`✅ Backend running at http://localhost:${port}/api`);
 }
 
-// Only start a local HTTP server when NOT running on Vercel
-if (!process.env.VERCEL) {
   bootstrap();
-}

@@ -1,20 +1,29 @@
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
-import { ExpressAdapter } from '@nestjs/platform-express';
-import express from 'express';
+import serverless from 'serverless-http';
 
-const server = express();
+let cachedHandler: any;
 
-export const createServer = async () => {
-  const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
-  app.enableCors();
-  // Ensure Nest recognizes the /api prefix from the rewrite
-  app.setGlobalPrefix('api'); 
+async function bootstrapServer() {
+  const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+    origin: true,
+    credentials: true,
+  });
+
+  app.setGlobalPrefix('api');
+
   await app.init();
-  return server;
-};
 
-export default async (req: any, res: any) => {
-  await createServer();
-  server(req, res);
-};
+  const expressApp = app.getHttpAdapter().getInstance();
+  return serverless(expressApp);
+}
+
+export default async function handler(req: any, res: any) {
+  if (!cachedHandler) {
+    cachedHandler = await bootstrapServer();
+  }
+  return cachedHandler(req, res);
+}
