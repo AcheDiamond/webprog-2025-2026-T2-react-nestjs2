@@ -1,24 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
 @Injectable()
 export class GuestbookService {
-  private supabase: SupabaseClient;
-
-  constructor() {
-    const url = process.env.SUPABASE_URL;
-    const key =
-      process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
-      process.env.SUPABASE_ANON_KEY?.trim();
-
-    console.log('GuestbookService SUPABASE_URL:', url);
-    console.log('GuestbookService SUPABASE_KEY length:', key?.length);
-
-    if (!url) throw new Error('SUPABASE_URL is missing');
-    if (!key) throw new Error('SUPABASE key is missing (service role or anon)');
-
-    this.supabase = createClient(url, key);
-  }
+  private supabase = createClient(
+    process.env.SUPABASE_URL!,
+    // Use service role if present; else fall back to anon
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY!,
+  );
 
   async list() {
     const { data, error } = await this.supabase
